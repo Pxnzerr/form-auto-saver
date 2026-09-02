@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página de Demonstração - Form Auto-Saver</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: #121215;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --primary: #ffffff;
+      --border: #27272a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 780px;
+      width: 100%;
+    }
+
+    header {
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fafafa;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: #18181b;
+      color: #fafafa;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    input, textarea, .editable-box {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background-color: #09090b;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, textarea:focus, .editable-box:focus {
+      border-color: #fafafa;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .editable-box {
+      min-height: 70px;
+      user-select: text;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background-color: #fafafa;
+      color: #09090b;
+      border-color: #fafafa;
+    }
+
+    .btn-primary:hover {
+      background-color: #e4e4e7;
+    }
+
+    .btn-secondary {
+      background-color: #18181b;
+      color: #fafafa;
+    }
+
+    .btn-secondary:hover {
+      background-color: #27272a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Form Auto-Saver</h1>
+      <p class="subtitle">Área de testes para verificar o salvamento e restauração automática de formulários.</p>
+    </header>
+
+    <div class="card">
+      <div class="card-title">
+        Campos Monitorados <span class="badge">Salvamento Ativo</span>
+      </div>
+
+      <div class="form-group">
+        <label for="userName">Nome Completo</label>
+        <input type="text" id="userName" name="full_name" placeholder="Ex: Lucas Ferreira">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="userEmail">E-mail de Contato</label>
+          <input type="email" id="userEmail" name="email" placeholder="lucas@exemplo.com">
+        </div>
+        <div class="form-group">
+          <label for="userTopic">Assunto</label>
+          <input type="text" id="userTopic" name="topic" placeholder="Assunto da mensagem">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="userMessage">Mensagem</label>
+        <textarea id="userMessage" name="message" placeholder="Digite seu texto aqui..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Editor Formatável (ContentEditable)</label>
+        <div class="editable-box" contenteditable="true" id="richEditor" role="textbox">
+          Digite qualquer conteúdo formatado aqui para testar o auto-save.
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-secondary" onclick="document.querySelectorAll('input:not([type=password]), textarea').forEach(el => el.value = '')">
+          Limpar Campos
+        </button>
+        <button type="button" class="btn-primary" onclick="window.location.reload()">
+          Recarregar Página
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        Campos Protegidos <span class="badge">Privacidade Garantida</span>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+        Campos confidenciais como senhas, dados de cartão ou chaves de segurança nunca são gravados.
+      </p>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="userPass">Senha</label>
+          <input type="password" id="userPass" name="password" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label for="cardNumber">Cartão de Crédito</label>
+          <input type="text" id="cardNumber" name="card_number" placeholder="4000 1234 5678 9010">
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
