@@ -8,6 +8,9 @@
     'new-password', 'one-time-code', 'private'
   ];
 
+  const elementMetadataCache = new WeakMap();
+  const elementEligibilityCache = new WeakMap();
+  const lastPersistedValues = new Map();
   const inputDebounceMap = new Map();
   const DEBOUNCE_TIME = 500;
 
@@ -23,25 +26,30 @@
   function isEligibleInput(element) {
     if (!element || !(element instanceof HTMLElement)) return false;
 
+    if (elementEligibilityCache.has(element)) {
+      return elementEligibilityCache.get(element);
+    }
+
+    let eligible = false;
+
     if (element.isContentEditable || element.getAttribute('contenteditable') === 'true' || element.getAttribute('contenteditable') === '') {
-      return !containsSensitiveData(element);
-    }
+      eligible = !containsSensitiveData(element);
+    } else {
+      const tag = element.tagName.toUpperCase();
 
-    const tag = element.tagName.toUpperCase();
-
-    if (tag === 'TEXTAREA') {
-      return !containsSensitiveData(element);
-    }
-
-    if (tag === 'INPUT') {
-      const type = (element.getAttribute('type') || 'text').toLowerCase();
-      const validTypes = ['text', 'email', 'search', 'url', 'tel'];
-      if (validTypes.includes(type)) {
-        return !containsSensitiveData(element);
+      if (tag === 'TEXTAREA') {
+        eligible = !containsSensitiveData(element);
+      } else if (tag === 'INPUT') {
+        const type = (element.getAttribute('type') || 'text').toLowerCase();
+        const validTypes = ['text', 'email', 'search', 'url', 'tel'];
+        if (validTypes.includes(type)) {
+          eligible = !containsSensitiveData(element);
+        }
       }
     }
 
-    return false;
+    elementEligibilityCache.set(element, eligible);
+    return eligible;
   }
 
   function containsSensitiveData(element) {
@@ -164,6 +172,10 @@
   }
 
   function inspectElementDescriptor(element) {
+    if (elementMetadataCache.has(element)) {
+      return elementMetadataCache.get(element);
+    }
+
     let fieldId = '';
     let selector = '';
 
@@ -186,7 +198,9 @@
     }
 
     const fieldLabel = getFieldFriendlyName(element);
-    return { fieldId, selector, fieldLabel };
+    const descriptor = { fieldId, selector, fieldLabel };
+    elementMetadataCache.set(element, descriptor);
+    return descriptor;
   }
 
   function extractTextValue(element) {
@@ -203,11 +217,16 @@
     const textContent = extractTextValue(element);
     const { fieldId, selector, fieldLabel } = inspectElementDescriptor(element);
 
+    if (lastPersistedValues.get(fieldId) === textContent) {
+      return;
+    }
+
     try {
       const stored = await chrome.storage.local.get(urlKey);
       const pageDrafts = stored[urlKey] || {};
 
       if (!textContent || textContent.trim() === '') {
+        lastPersistedValues.delete(fieldId);
         if (pageDrafts[fieldId]) {
           delete pageDrafts[fieldId];
           if (Object.keys(pageDrafts).length === 0) {
@@ -228,6 +247,7 @@
       };
 
       await chrome.storage.local.set({ [urlKey]: pageDrafts });
+      lastPersistedValues.set(fieldId, textContent);
     } catch {
       // storage exception handled quietly
     }

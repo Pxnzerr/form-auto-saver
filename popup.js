@@ -128,10 +128,12 @@
     draftsContainerEl.classList.remove('hidden');
     btnClearAllEl.style.display = 'inline-flex';
 
+    const fragment = document.createDocumentFragment();
     drafts.forEach(draft => {
       const card = buildDraftCard(draft);
-      draftsContainerEl.appendChild(card);
+      fragment.appendChild(card);
     });
+    draftsContainerEl.appendChild(fragment);
   }
 
   function buildDraftCard(draft) {
