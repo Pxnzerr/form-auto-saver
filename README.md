@@ -52,3 +52,12 @@ O objetivo do projeto é resolver uma dor comum da navegação na web: a **perda
 ## Testando Localmente
 
 Para testar o funcionamento imediatamente, abra o arquivo `test_form.html` no seu navegador, digite qualquer texto nos campos demonstrativos e abra o popup da extensão.
+
+---
+
+## Compatibilidade
+
+- Google Chrome (versão 88+)
+- Microsoft Edge (versão 88+)
+- Brave Browser
+- Opera e outros navegadores baseados em Chromium com suporte a Manifest V3
