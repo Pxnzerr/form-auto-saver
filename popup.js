@@ -14,6 +14,7 @@
   let currentNormalizedUrl = '';
   let currentDraftsMap = {};
   let toastTimer = null;
+  let searchDebounceTimer = null;
 
   function normalizeUrl(fullUrl) {
     try {
@@ -325,7 +326,10 @@
     return span.innerHTML;
   }
 
-  inputSearchEl.addEventListener('input', applyDraftsFilter);
+  inputSearchEl.addEventListener('input', () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(applyDraftsFilter, 150);
+  });
   btnClearAllEl.addEventListener('click', removeAllPageDrafts);
 
   document.addEventListener('DOMContentLoaded', async () => {

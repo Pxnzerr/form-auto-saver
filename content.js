@@ -257,7 +257,13 @@
     const el = event.target;
     if (!isEligibleInput(el)) return;
 
+    const textContent = extractTextValue(el);
     const { fieldId } = inspectElementDescriptor(el);
+
+    // Evita enfileirar debounce se o valor já estiver sincronizado na memória
+    if (lastPersistedValues.get(fieldId) === textContent) {
+      return;
+    }
 
     if (inputDebounceMap.has(fieldId)) {
       clearTimeout(inputDebounceMap.get(fieldId));

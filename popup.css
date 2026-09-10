@@ -256,6 +256,8 @@ body {
   box-shadow: var(--shadow-sm);
   transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.2s ease;
   animation: fadeIn 0.2s ease forwards;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 110px;
 }
 
 .draft-card:hover {
