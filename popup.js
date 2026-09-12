@@ -155,21 +155,21 @@
       </div>
       <div class="card-preview">${sanitizeText(preview)}</div>
       <div class="card-actions">
-        <button class="btn-action btn-copy" title="Copiar texto">
+        <button class="btn-action btn-copy" data-action="copy" title="Copiar texto">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
           <span>Copiar</span>
         </button>
-        <button class="btn-action btn-restore" title="Restaurar no formulário">
+        <button class="btn-action btn-restore" data-action="restore" title="Restaurar no formulário">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="1 4 1 10 7 10"></polyline>
             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
           </svg>
           <span>Restaurar</span>
         </button>
-        <button class="btn-icon danger btn-delete" title="Excluir rascunho">
+        <button class="btn-icon danger btn-delete" data-action="delete" title="Excluir rascunho">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -178,74 +178,63 @@
       </div>
     `;
 
-    const copyBtn = card.querySelector('.btn-copy');
-    const restoreBtn = card.querySelector('.btn-restore');
-    const deleteBtn = card.querySelector('.btn-delete');
+    return card;
+  }
 
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(draft.text);
-        copyBtn.classList.add('copied');
+  async function handleCopyDraft(draft, copyBtn) {
+    try {
+      await navigator.clipboard.writeText(draft.text);
+      copyBtn.classList.add('copied');
+      copyBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>Copiado</span>
+      `;
+      notifyUser('Texto copiado com sucesso.');
+
+      setTimeout(() => {
+        copyBtn.classList.remove('copied');
         copyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copiar</span>
+        `;
+      }, 1800);
+    } catch {
+      notifyUser('Falha ao copiar para a área de transferência.');
+    }
+  }
+
+  async function handleRestoreDraft(draft, restoreBtn) {
+    if (!activeTabId) {
+      notifyUser('Nenhuma aba ativa identificada.');
+      return;
+    }
+
+    restoreBtn.disabled = true;
+    restoreBtn.innerHTML = `<span>Restaurando...</span>`;
+
+    try {
+      const reply = await chrome.tabs.sendMessage(activeTabId, {
+        action: 'RESTORE_DRAFT',
+        selector: draft.selector,
+        fieldId: draft.fieldId,
+        text: draft.text
+      });
+
+      if (reply && reply.success) {
+        notifyUser('Texto restaurado no campo da página.');
+        restoreBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          <span>Copiado</span>
+          <span>Restaurado</span>
         `;
-        notifyUser('Texto copiado com sucesso.');
-
-        setTimeout(() => {
-          copyBtn.classList.remove('copied');
-          copyBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            <span>Copiar</span>
-          `;
-        }, 1800);
-      } catch {
-        notifyUser('Falha ao copiar para a área de transferência.');
-      }
-    });
-
-    restoreBtn.addEventListener('click', async () => {
-      if (!activeTabId) {
-        notifyUser('Nenhuma aba ativa identificada.');
-        return;
-      }
-
-      restoreBtn.disabled = true;
-      restoreBtn.innerHTML = `<span>Restaurando...</span>`;
-
-      try {
-        const reply = await chrome.tabs.sendMessage(activeTabId, {
-          action: 'RESTORE_DRAFT',
-          selector: draft.selector,
-          fieldId: draft.fieldId,
-          text: draft.text
-        });
-
-        if (reply && reply.success) {
-          notifyUser('Texto restaurado no campo da página.');
-          restoreBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Restaurado</span>
-          `;
-        } else {
-          notifyUser((reply && reply.error) || 'Campo não encontrado na página.');
-          restoreBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="1 4 1 10 7 10"></polyline>
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-            </svg>
-            <span>Restaurar</span>
-          `;
-        }
-      } catch {
-        notifyUser('Recarregue a página e tente novamente.');
+      } else {
+        notifyUser((reply && reply.error) || 'Campo não encontrado na página.');
         restoreBtn.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="1 4 1 10 7 10"></polyline>
@@ -253,28 +242,52 @@
           </svg>
           <span>Restaurar</span>
         `;
-      } finally {
-        restoreBtn.disabled = false;
-        setTimeout(() => {
-          restoreBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="1 4 1 10 7 10"></polyline>
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-            </svg>
-            <span>Restaurar</span>
-          `;
-        }, 1800);
       }
-    });
+    } catch {
+      notifyUser('Recarregue a página e tente novamente.');
+      restoreBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+        <span>Restaurar</span>
+      `;
+    } finally {
+      restoreBtn.disabled = false;
+      setTimeout(() => {
+        restoreBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>Restaurar</span>
+        `;
+      }, 1800);
+    }
+  }
 
-    deleteBtn.addEventListener('click', () => {
+  function handleContainerClick(event) {
+    const actionBtn = event.target.closest('[data-action]');
+    if (!actionBtn) return;
+
+    const card = actionBtn.closest('.draft-card');
+    if (!card) return;
+
+    const fieldId = card.dataset.fieldId;
+    const draft = currentDraftsMap[fieldId];
+    if (!draft) return;
+
+    const action = actionBtn.dataset.action;
+    if (action === 'copy') {
+      handleCopyDraft(draft, actionBtn);
+    } else if (action === 'restore') {
+      handleRestoreDraft(draft, actionBtn);
+    } else if (action === 'delete') {
       card.classList.add('removing');
       setTimeout(async () => {
-        await removeSpecificDraft(draft.fieldId);
+        await removeSpecificDraft(fieldId);
       }, 120);
-    });
-
-    return card;
+    }
   }
 
   async function removeSpecificDraft(fieldId) {
@@ -331,6 +344,7 @@
     searchDebounceTimer = setTimeout(applyDraftsFilter, 150);
   });
   btnClearAllEl.addEventListener('click', removeAllPageDrafts);
+  draftsContainerEl.addEventListener('click', handleContainerClick);
 
   document.addEventListener('DOMContentLoaded', async () => {
     await initializeActiveContext();

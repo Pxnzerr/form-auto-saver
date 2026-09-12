@@ -1,12 +1,7 @@
 (function () {
   'use strict';
 
-  const RESTRICTED_TERMS = [
-    'card', 'cvv', 'credit', 'token', 'auth', 'pass',
-    'secret', 'ssn', 'pin', 'cvc', 'securitycode',
-    'cc-number', 'cc-exp', 'cc-csc', 'current-password',
-    'new-password', 'one-time-code', 'private'
-  ];
+  const RESTRICTED_REGEX = /(?:card|cvv|credit|token|auth|pass|secret|ssn|pin|cvc|securitycode|cc-number|cc-exp|cc-csc|current-password|new-password|one-time-code|private)/i;
 
   const elementMetadataCache = new WeakMap();
   const elementEligibilityCache = new WeakMap();
@@ -68,10 +63,8 @@
     ];
 
     for (const attr of inspectList) {
-      if (!attr || typeof attr !== 'string') continue;
-      const lower = attr.toLowerCase();
-      for (const term of RESTRICTED_TERMS) {
-        if (lower.includes(term)) return true;
+      if (attr && typeof attr === 'string' && RESTRICTED_REGEX.test(attr)) {
+        return true;
       }
     }
 
@@ -88,9 +81,7 @@
         if (!val || typeof val !== 'string') continue;
         const lowerForm = val.toLowerCase();
         if (lowerForm.includes('password') || lowerForm.includes('checkout') || lowerForm.includes('payment')) {
-          for (const term of RESTRICTED_TERMS) {
-            if (lowerForm.includes(term)) return true;
-          }
+          if (RESTRICTED_REGEX.test(lowerForm)) return true;
         }
       }
     }
